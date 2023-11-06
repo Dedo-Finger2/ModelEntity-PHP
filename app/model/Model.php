@@ -2,7 +2,9 @@
 
 namespace app\model;
 use app\database\Connection;
+use app\database\relations\RelationshipBelongsTo;
 use app\entity\Entity;
+use app\lib\Helpers;
 
 abstract class Model
 {
@@ -12,6 +14,7 @@ abstract class Model
      * @var string
      */
     protected string $table;
+    protected string $primaryKey;
 
 
     /**
@@ -59,18 +62,35 @@ abstract class Model
     }
 
 
+    public function belongsTo(string $model, string $property = null)
+    {
+        return RelationshipBelongsTo::createWith(
+            static::class,
+            $model,
+            $property,
+        );
+    }    
+
+
+    public function relatedWith(array $ids)
+    {
+        $connection = Connection::getConnection();
+        $query = "select * from {$this->table} where {$this->primaryKey} in (". implode(",", $ids) .")";
+        $stmt = $connection->query($query);
+
+        return $stmt->fetchAll(\PDO::FETCH_CLASS, $this->getEntity());
+    }
+
+
     /**
      * Retorna a entidade do modelo
      *
      * @return string - Caminho da entidade
      */
     private function getEntity()
-    {
-        // Criando uma reflection class referenciado à classe que executar esse método
-        $reflect = new \ReflectionClass(static::class);
-        
+    { 
         // Pegando o nome da classe que executou o método
-        $classShortName = $reflect->getShortName();
+        $classShortName = Helpers::getClassShortName(static::class);
         
         // Pegando o caminho da entidade referente a esse modelo
         $entity = "app\\entity\\{$classShortName}Entity";

@@ -18,7 +18,7 @@ abstract class Entity
      * @param string $property - Nome da coluna na tabela do banco de dados
      * @param string $value - Valor da coluna na tabela do banco de dados
      */
-    public function __set(string $property, string $value)
+    public function __set(string $property, mixed $value)
     {
         $this->attributes[$property] = $value;
     }
