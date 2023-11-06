@@ -2,35 +2,42 @@
 
 namespace app\database\relations;
 use app\lib\Helpers;
-use app\model\Model;
 
 class RelationshipBelongsTo
 {
+    /**
+     * Método que cria a relação entre os modelos
+     *
+     * @param string $class - Classe principal
+     * @param string $foreignClass - Outra classe
+     * @param string|null $withProperty - Nome da propriedade que vai guardar a relação entre modelos
+     */
     public static function createWith(string $class, string $foreignClass, ?string $withProperty)
     {
         if (!class_exists($foreignClass)) {
             throw new \Exception("Class {$foreignClass} does not exists");
         }
 
-        $modelClass = new $class;
-        $results = $modelClass->all();
+        $classObj = new $class;
+        $results = $classObj->all();
 
         $classShortName = Helpers::getClassShortName($foreignClass);
-        $foreignKey = strtolower('id_'.$classShortName);
+        $id = strtolower('id_'.$classShortName);    // Isso segue o padrão de criação de ID do seu banco, nesse caso é "id_nomeTabela"
 
-        $ids = array_map(function ($data) use($foreignKey) {
-            return $data->$foreignKey;
+        // Pegando todos os IDs
+        $ids = array_map(function ($data) use($id) {
+            return $data->$id;
         }, $results);
 
-        $withName = self::getForeignProperty($classShortName, $withProperty);
+        $foreignProperty = self::getForeignProperty($classShortName, $withProperty);
 
-        $relatedWith = new $foreignClass;
-        $resultsFromRelated = $relatedWith->relatedWith(array_unique($ids));
+        $foreignObj = new $foreignClass;
+        $resultsFromRelated = $foreignObj->relatedWith(array_unique($ids));
 
-        foreach ($results as $data) {
-            foreach ($resultsFromRelated as $dataFromRelated) {
-                if ($data->$foreignKey === $dataFromRelated->$foreignKey) {
-                    $data->$withName = $dataFromRelated;
+        foreach ($results as $firstTableResult) {
+            foreach ($resultsFromRelated as $foreignTableResult) {
+                if ($firstTableResult->$id === $foreignTableResult->$id) {
+                    $firstTableResult->$foreignProperty = $foreignTableResult;
                 }
             }
         }
@@ -39,6 +46,13 @@ class RelationshipBelongsTo
     }
 
     
+    /**
+     * Retorna a propriedade que estabelece realção entre os modelos
+     *
+     * @param string $classShortName - Nome da classe
+     * @param string|null $withProperty - Nome da nova coluna que vai receber o objeto relacionado
+     * @return string
+     */
     private static function getForeignProperty(string $classShortName, ?string $withProperty)
     {
         return (!$withProperty) ? strtolower($classShortName) : $withProperty;
