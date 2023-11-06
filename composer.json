@@ -1,0 +1,15 @@
+{
+    "name": "anton/model-entity",
+    "autoload": {
+        "psr-4": {
+            "app\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Antonio Mauricio",
+            "email": "antonioimportant@gmail.com"
+        }
+    ],
+    "require": {}
+}
